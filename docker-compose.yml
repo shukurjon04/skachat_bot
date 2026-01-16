@@ -1,0 +1,7 @@
+services:
+  bot:
+    build: .
+    container_name: social-media-bot
+    restart: unless-stopped
+    volumes:
+      - ./downloads:/app/downloads

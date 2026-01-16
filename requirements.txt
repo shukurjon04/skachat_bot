@@ -1,0 +1,5 @@
+python-telegram-bot==21.10
+yt-dlp
+shazamio==0.8.1
+aiofiles==23.2.1
+audioop-lts
