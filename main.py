@@ -13,7 +13,7 @@ from shazamio import Shazam
 BOT_TOKEN = "7590973597:AAHlUTNUywhZZwVpcLWADA_kV-50QkGYD_Q"
 
 # Video va audio fayllar uchun papka
-DOWNLOAD_PATH = "downloads"
+DOWNLOAD_PATH = os.path.abspath("downloads")
 os.makedirs(DOWNLOAD_PATH, exist_ok=True)
 
 # Instagram uchun cookies fayli (agar mavjud bo'lsa)
@@ -69,6 +69,7 @@ Videoni yuborish uchun shunchaki linkni yuboring! 👇
                 'no_warnings': True,
                 'extract_audio': False,
                 'max_filesize': 50 * 1024 * 1024,  # 50MB max
+                'restrictfilenames': True,
                 'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
                 'socket_timeout': 30,
                 'retries': 10,
@@ -94,12 +95,14 @@ Videoni yuborish uchun shunchaki linkni yuboring! 👇
                     'url': url
                 }
         except Exception as e:
+            print(f"Download error: {e}")
+            print(f"Path attempted: {user_download_path}")
             return {'success': False, 'error': str(e)}
 
     async def extract_audio(self, video_url: str, chat_id: int) -> str:
         """Videodan audio ajratib olish"""
         try:
-            audio_path = f"{DOWNLOAD_PATH}/{chat_id}_audio.mp3"
+            audio_path = os.path.join(DOWNLOAD_PATH, f"{chat_id}_audio.mp3")
 
             ydl_opts = {
                 'format': 'bestaudio/best',
@@ -111,6 +114,7 @@ Videoni yuborish uchun shunchaki linkni yuboring! 👇
                 'outtmpl': audio_path.replace('.mp3', ''),
                 'quiet': True,
                 'no_warnings': True,
+                'restrictfilenames': True,
                 'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
             }
 
@@ -339,7 +343,8 @@ Videoni yuborish uchun shunchaki linkni yuboring! 👇
 
             # Shazam orqali musiqani tanish
             try:
-                music_recognition = await self.shazam.recognize_song(audio_path)
+                # recognize_song() deprecated, recognize() ishlatamiz
+                music_recognition = await self.shazam.recognize(audio_path)
                 if music_recognition.get('track'):
                     track = music_recognition['track']
                     music_info = {
@@ -351,6 +356,8 @@ Videoni yuborish uchun shunchaki linkni yuboring! 👇
                     music_info = {'success': False, 'error': 'Musiqa topilmadi'}
             except Exception as e:
                 print(f"Shazam xatosi: {e}")
+                if "ConnectError" in str(e) or "All connection attempts failed" in str(e):
+                    print("Shazam API ga ulanib bo'lmadi. AudD API ishlatilmoqda...")
                 music_info = await self.recognize_music_audd(audio_path)
 
             # Audio faylni o'chirish
@@ -418,7 +425,7 @@ Videoni yuborish uchun shunchaki linkni yuboring! 👇
         status_msg = await query.message.reply_text(f"⏳ <b>{selected['title']}</b> yuklanmoqda...", parse_mode='HTML')
 
         try:
-            audio_path = f"{DOWNLOAD_PATH}/{chat_id}_selected.mp3"
+            audio_path = os.path.join(DOWNLOAD_PATH, f"{chat_id}_selected.mp3")
             
             ydl_opts = {
                 'format': 'bestaudio/best',
@@ -430,6 +437,7 @@ Videoni yuborish uchun shunchaki linkni yuboring! 👇
                 'outtmpl': audio_path.replace('.mp3', ''),
                 'quiet': True,
                 'no_warnings': True,
+                'restrictfilenames': True,
                 'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
             }
 
